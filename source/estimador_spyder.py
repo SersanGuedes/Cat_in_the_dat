@@ -19,9 +19,8 @@ from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.pipeline import Pipeline
 from sklearn.model_selection import KFold, cross_val_score
 from sklearn.metrics import accuracy_score
-# from FNC_tratandoFeatures import FNC_tratandoFeatures
 import time
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 import numpy as np
 
 
@@ -33,13 +32,21 @@ start = time.time()
 PATH_FILE_TRAIN = 'data/train.csv'
 PATH_FILE_TEST  = 'data/test.csv'
 USE_COL_ID     = ['id']
-# USE_COLS_CAT_BIN   = ['bin_0','bin_1','bin_2','bin_3','bin_4']
-# USE_COLS_CAT_BIN   = ['bin_0','bin_1','bin_2','bin_3','bin_4','nom_0','nom_1','nom_2','nom_3','nom_4']
+# USE_COLS_CAT_BIN   = ['bin_1','bin_4']
 USE_COLS_CAT_BIN   = ['bin_0','bin_1','bin_2','bin_3','bin_4']
-# USE_COLS_CAT_NOM   = ['nom_0','nom_1','nom_2','nom_3','nom_4']
-USE_COLS_CAT_NOM   = ['nom_0','nom_1','nom_2','nom_3','nom_4','nom_5','nom_6','nom_7','nom_8','nom_9']
-# USE_COLS_CAT_NOM   = ['nom_5','nom_6','nom_7']
-USE_COLS_CAT_ORD   = []
+# USE_COLS_CAT_NOM   = ['nom_0','nom_1','nom_2','nom_3','nom_4','nom_5','nom_6']
+# USE_COLS_CAT_NOM   = ['nom_0','nom_1','nom_2','nom_3','nom_4','nom_5','nom_6','nom_7','nom_8','nom_9']
+
+# USE_COLS_CAT_NOM1   = ['nom_0','nom_1','nom_2','nom_3','nom_4']
+USE_COLS_CAT_NOM1   = ['nom_0','nom_1','nom_2','nom_3','nom_4','nom_5','nom_6']
+# USE_COLS_CAT_NOM2   = ['nom_5','nom_6']
+# USE_COLS_CAT_NOM2   = ['nom_5','nom_6','nom_7','nom_8','nom_9']
+USE_COLS_CAT_NOM2   = ['nom_7','nom_8','nom_9']
+USE_COLS_CAT_NOM = USE_COLS_CAT_NOM1 + USE_COLS_CAT_NOM2
+
+# USE_COLS_CAT_ORD   = ['ord_0','ord_1','ord_2']
+USE_COLS_CAT_ORD   = ['ord_0','ord_1','ord_2','ord_3','ord_4','ord_5']
+USE_COLS_CAT_DATE  = ['day','month']
 USE_COL_TARGET = ['target']
 TEST_SIZE = 0.2
 RANDOM_SEED = 0
@@ -51,26 +58,28 @@ SCORING = 'accuracy'
 #--- Flags
 flag_nom    = 1
 flag_ML     = 1
-flag_kaggle = 0
+flag_kaggle = 1
+
+flag_plotVarScores = 0
 
 
 ##--- Leitura
-df_train = pd.read_csv( PATH_FILE_TRAIN, index_col = USE_COL_ID, usecols = USE_COL_ID + USE_COLS_CAT_BIN + USE_COLS_CAT_NOM + USE_COLS_CAT_ORD + USE_COL_TARGET)
-df_test  = pd.read_csv( PATH_FILE_TEST,  index_col = USE_COL_ID, usecols = USE_COL_ID + USE_COLS_CAT_BIN + USE_COLS_CAT_NOM + USE_COLS_CAT_ORD )
+df_train = pd.read_csv( PATH_FILE_TRAIN, index_col = USE_COL_ID, usecols = USE_COL_ID + USE_COLS_CAT_BIN + USE_COLS_CAT_NOM + USE_COLS_CAT_ORD + USE_COLS_CAT_DATE + USE_COL_TARGET)
+df_test  = pd.read_csv( PATH_FILE_TEST,  index_col = USE_COL_ID, usecols = USE_COL_ID + USE_COLS_CAT_BIN + USE_COLS_CAT_NOM + USE_COLS_CAT_ORD + USE_COLS_CAT_DATE)
 
 df_train_2 = df_train.copy()
 df_test_2  = df_test.copy()
 
 
 if flag_nom:
-    list_feat = USE_COLS_CAT_NOM
+    # list_feat = USE_COLS_CAT_NOM + USE_COLS_CAT_ORD
+    # list_feat = USE_COLS_CAT_NOM
+    list_feat = USE_COLS_CAT_NOM2    
     for feat in list_feat:
-        # feat = "nom_5"
         v_unique = df_train_2[feat].unique()
         v_bar = []
         v_bar_round = []
         for value in v_unique:
-            df1 = df_train_2[feat]
             len_value = len( df_train_2[ df_train_2[feat] == value ] )
             sum_value = sum( df_train_2.target[ df_train_2[feat] == value ] )
             score_value = sum_value / len_value
@@ -78,13 +87,27 @@ if flag_nom:
             v_bar.append( score_value )
             v_bar_round.append( score_value_round )
             df_train_2[feat] [ df_train_2[feat]==value ] = score_value_round
-            
         
-        plt.figure()
-        plt.subplot(211)
-        plt.bar( list(range(0,len(v_bar))), v_bar )
-        plt.subplot(212)
-        plt.bar( list(range(0,len(v_bar_round))), v_bar_round )
+        if flag_kaggle:
+            v_unique_test = df_test_2[feat].unique()
+            for value in v_unique_test: #(!)Cuida das classes em teste que NÃO estão em treino.
+                if not( value in v_unique ):
+                    df_test_2[feat] [ df_test_2[feat]==value ] = -1
+            
+            count1 = 0
+            for value in v_unique: #(!)Cuida das classes em teste que estão em treino.
+                if value in v_unique_test:
+                    df_test_2[feat] [ df_test_2[feat]==value ] = v_bar_round[count1]
+                count1 += 1
+                
+             
+            
+        if flag_plotVarScores:
+            plt.figure()
+            plt.subplot(211)
+            plt.bar( list(range(0,len(v_bar))), v_bar )
+            plt.subplot(212)
+            plt.bar( list(range(0,len(v_bar_round))), v_bar_round )
 
 
 if flag_ML:
@@ -104,15 +127,15 @@ if flag_ML:
     
     
     ##--- Instanciando
-    # ohe = OneHotEncoder(sparse=False, handle_unknown='ignore')
-    ohe = OneHotEncoder(sparse=True, handle_unknown='ignore')
+    ohe = OneHotEncoder(sparse=False, handle_unknown='ignore')
+    # ohe = OneHotEncoder(sparse=True, handle_unknown='ignore')
     cat_imputer = SimpleImputer(strategy=CAT_STRATEGY)
     clf1 = LogisticRegression(random_state=RANDOM_SEED)
     kfold = KFold(n_splits=N_SPLITS, shuffle=True, random_state=RANDOM_SEED)
     
     
     ##--- Pipe categoric
-    cat_feat = USE_COLS_CAT_BIN + USE_COLS_CAT_NOM + USE_COLS_CAT_ORD
+    cat_feat = USE_COLS_CAT_BIN + USE_COLS_CAT_NOM + USE_COLS_CAT_ORD + USE_COLS_CAT_DATE
     cat_transf = Pipeline([('Cat_Imputer', cat_imputer), ('OneHot', ohe)])
     
     
@@ -131,7 +154,8 @@ if flag_ML:
     print(f'Std : {scores.std()*100:.2f}%')  
     pipe.fit(X_train, y_train)
     print("TERMINOU FIT!")
-    y_pred = pipe.predict(X_test)
+    # y_pred = pipe.predict(X_test)
+    y_pred = pipe.predict_proba(X_test)[:,1]
     print("TERMINOU PREDICT!")
     if not(flag_kaggle):
         print(f'Acc teste: {accuracy_score(y_test, y_pred)*100:.2f}%')

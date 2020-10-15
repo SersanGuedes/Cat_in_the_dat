@@ -27,7 +27,7 @@ PATH_FILE_TEST  = 'data/test.csv'
 USE_COL_ID     = ['id']
 # USE_COLS_CAT   = ['bin_0','bin_1','bin_2','bin_3','bin_4']
 # USE_COLS_CAT   = ['bin_0','bin_1','bin_2','bin_3','bin_4','nom_0','nom_1','nom_2','nom_3','nom_4']
-USE_COLS_CAT   = ['bin_0','bin_1','bin_2','nom_5']
+USE_COLS_CAT   = ['bin_0','bin_1','bin_2']
 USE_COL_TARGET = ['target']
 TEST_SIZE = 0.2
 RANDOM_SEED = 0
@@ -64,8 +64,8 @@ else:
 
 
 ##--- Instanciando
-ohe = OneHotEncoder(sparse=False, handle_unknown='ignore')
-# ohe = OneHotEncoder(sparse=True, handle_unknown='ignore')
+# ohe = OneHotEncoder(sparse=False, handle_unknown='ignore')
+ohe = OneHotEncoder(sparse=True, handle_unknown='ignore')
 cat_imputer = SimpleImputer(strategy=CAT_STRATEGY)
 clf1 = LogisticRegression(random_state=RANDOM_SEED)
 kfold = KFold(n_splits=N_SPLITS, shuffle=True, random_state=RANDOM_SEED)
